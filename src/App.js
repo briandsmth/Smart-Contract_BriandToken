@@ -6,18 +6,22 @@ import Web3 from 'web3';
 
 class App extends Component{
 
+
   async componentWillMount() {
-    await this.init()
+    await this.loadWeb3()
+    await this.loadBlockchainData()
   }
 
-  init = async () => {
-    let provider = window.ethereum;
+  async loadWeb3() {
+    let provider = Web3(window.ethereum);
+    let selectedAccount;
 
     if (typeof provider !== 'undefined') {
 
       provider
         .request({ method: 'eth_requestAccounts' }).then((accounts) => {
           selectedAccount = accounts[0]
+          this.setState({ selectedAccount: accounts[0] })
           console.log(`Selected account is ${selectedAccount}`)
         })
         .catch((err) => {
@@ -25,27 +29,53 @@ class App extends Component{
         })
       window.ethereum.on('accountsChanged', (accounts) => {
         selectedAccount = accounts[0]
+        this.setState({ selectedAccount: accounts[0] })
         console.log(`selected account changed to ${selectedAccount}`)
       })
     }
-    const web3 = new Web3(provider);
+  }
 
-    const networkId = await web3.eth.net.getId();
+  async loadBlockchainData (){
+    const web3 = window.web3
+
+    const accounts = await web3.eth.getAccounts()
+    this.setState({selectedAccount: accounts[0]})
+
+    const networkId = await web3.eth.net.getId()
 
 
+    //Load BriandTokenSale Data
     const briandTokenSaleData = BriandTokenSale.networks[networkId]
-    briandTokenSale = new web3.eth.Contract(
-      BriandTokenSale.abi,
-      briandTokenSaleData
-    );
+    if (briandTokenSaleData) {
+      const briandTokenSale = new web3.eth.Contract(
+        BriandTokenSale.abi,
+        briandTokenSaleData.address
+      )
+      let tokenPrice = await briandTokenSale.methods.tokenPrice().call()
+      this.setState({ tokenPrice: tokenPrice.toString() })
+      let tokensSold = await briandTokenSale.methods.tokensSold().call()
+      this.setState({ tokensSold: tokensSold.toString() })
+      this.setState({ tokensAvailable: tokensAvailable.toString() })
+      tokensAvailable
+    } else {
+      window.alert('BriandTokenSale contract not deployed to detected network.')
+    }
 
+    //Load BriandToken Data
     const briandTokenData = BriandToken.networks[networkId]
-    briandToken = new web3.eth.Contract(
-      BriandToken.abi,
-      briandTokenData
-    );
-    let briandTokenBalance = await briandToken.methods.balanceOf(selectedAccount).call()
-    this.setState({ briandTokenBalance: briandTokenBalance.toString() })
+    if (briandTokenData) {
+      const briandToken = new web3.eth.Contract(
+        BriandToken.abi,
+        briandTokenData.address
+      )
+      this.setState({ briandToken })
+        let briandTokenBalance = await briandToken.methods.balanceOf(this.state.account).call()
+        this.setState({ briandTokenBalance: briandTokenBalance.toString() })
+    } else {
+      window.alert('BriandToken contract not deployed to detected network.')
+    }
+    
+    this.setState({ loading: false })
 
     await listenForEvents();
     return render();
@@ -64,43 +94,50 @@ class App extends Component{
 
   render = async () => {
     //render
-    if (loading) {
-      return;
+    let content
+    if(this.state.loading) {
+      content = <p id="loader" className="text-center">Loading...</p>
+    } else {
+      content = <Main
+        briandTokenBalance={this.state.briandTokenBalance}
+        tokensAvailable={this.state.tokensAvailable}
+        tokensSold={this.state.tokensSold}
+        tokenPrice={this.state.tokenPrice}
+        buyTokens={this.buyTokens}
+      />
     }
 
-    this.setState({loading = true});
+    return (
+      <div className="content mr-auto ml-auto">
+        {content}
+      </div>
+    );
+    
 
-    const loader = $('#loader');
-    const content = $('#content');
 
-    loader.show();
-    content.hide();
+    // $('#accountAddress').html("Your Account: " + selectedAccount);
 
-    $('#accountAddress').html("Your Account: " + selectedAccount);
+    // tokenPrice = await briandTokenSale.methods.tokenPrice();
+    // $('.token-price').html(web3.fromWei(tokenPrice, "ether").toNumber());
 
-    tokenPrice = await briandTokenSale.methods.tokenPrice();
-    $('.token-price').html(web3.fromWei(tokenPrice, "ether").toNumber());
+    // tokensSold = await briandTokenSale.methods.tokensSold();
+    // $('.tokens-sold').html(tokensSold);
+    // $('.tokens-available').html(tokensAvailable);
 
-    tokensSold = await briandTokenSale.methods.tokensSold();
-    $('.tokens-sold').html(tokensSold);
-    $('.tokens-available').html(tokensAvailable);
+    // const progressPercent = (Math.ceil(App.tokensSold) / App.tokensAvailable) * 100;
+    // $('#progress').css('width', progressPercent + '%');
 
-    const progressPercent = (Math.ceil(App.tokensSold) / App.tokensAvailable) * 100;
-    $('#progress').css('width', progressPercent + '%');
+    // balance = await briandToken.methods.balanceOf(selectedAccount);
+    // $('.briand-balance').html(balance.toNumber());
 
-    balance = await briandToken.methods.balanceOf(selectedAccount);
-    $('.briand-balance').html(balance.toNumber());
-
-    loading = false;
-    loader.hide();
-    content.show();
+    // loading = false;
+    // loader.hide();
+    // content.show();
   }
 
-  buyTokens = () => {
-    $('#content').hide();
-    $('#loader').show();
+  buyTokens = (numberOfTokens) => {
+    this.setState({ loading: true })
 
-    const numberOfTokens = $('#numberOfTokens').val();
     this.state.briandTokenSale.methods.buyTokens(numberOfTokens, {
         from: selectedAccount,
         value: numberOfTokens * tokenPrice,
@@ -108,7 +145,7 @@ class App extends Component{
     })
 
     console.log("Token bought...")
-    $('form').trigger('reset')
+    this.setState({ loading: false })
 }
 
 constructor(props) {
@@ -116,7 +153,7 @@ constructor(props) {
   this.state = {
     selectedAccount : '0x0',
     briandTokenSale : '0',
-    briandToken     : '0',
+    briandTokenBalance     : '0',
     tokenPrice : '1000000000000000',
     tokensSold : '0',
     tokensAvailable : '750000',
@@ -124,47 +161,6 @@ constructor(props) {
   }
 }
 
-
-  return <div className="App">
-    <div class="container" style="width: 650px;">
-      <div class="row">
-        <div class="col-lg-12">
-          <h1 class="text-center">DAPP TOKEN ICO SALE</h1>
-          <hr />
-          <br />
-        </div>
-        <div id="loader">
-          <p class="text-center">Loading...</p>
-        </div>
-        <div id="content" class="text-center" style="display: none;">
-          <p>
-            Introducing "DApp Token" (DAPP)!
-            Token price is <span class="token-price"></span> Ether. You currently have <span class="briand-balance"></span>&nbsp;DAPP.
-          </p>
-          <br />
-          <form onSubmit="App.buyTokens(); return false;" role="form">
-            <div class="form-group">
-              <div class="input-group">
-                <input id="numberOfTokens" class="form-control input-lg" type="number" name="number" value="1" min="1" pattern="[0-9]">
-                </input>
-                <span class="input-group-btn">
-                  <button type="submit" class="btn btn-primary btn-lg" onClick={() => buyTokens()}>Buy Tokens</button>
-                </span>
-              </div>
-            </div>
-          </form>
-
-          <div class="progress">
-            <div id="progress" class="progress-bar progress-bar-striped active" aria-valuemin="0" aria-valuemax="100">
-            </div>
-          </div>
-          <p><span class="tokens-sold"></span> / <span class="tokens-available"></span> tokens sold</p>
-
-          <p id="accountAddress"></p>
-        </div>
-      </div>
-    </div>
-  </div>
 }
 
 export default App;
