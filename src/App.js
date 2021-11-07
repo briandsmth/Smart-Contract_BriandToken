@@ -1,8 +1,10 @@
-import React, { Component} from "react";
-import { buyTokens } from "./Web3Client";
-import BriandTokenSale from 'contracts/BriandTokenSale.json';
-import BriandToken from 'contracts/BriandToken.json';
-import Web3 from 'web3';
+import React, { Component} from "react"
+import { buyTokens } from "./Web3Client"
+import BriandTokenSale from 'contracts/BriandTokenSale.json'
+import BriandToken from 'contracts/BriandToken.json'
+import Web3 from 'web3'
+import Main from './Main'
+import Navbar from './Navbar'
 
 class App extends Component{
 
@@ -13,25 +15,15 @@ class App extends Component{
   }
 
   async loadWeb3() {
-    let provider = Web3(window.ethereum);
-    let selectedAccount;
-
-    if (typeof provider !== 'undefined') {
-
-      provider
-        .request({ method: 'eth_requestAccounts' }).then((accounts) => {
-          selectedAccount = accounts[0]
-          this.setState({ selectedAccount: accounts[0] })
-          console.log(`Selected account is ${selectedAccount}`)
-        })
-        .catch((err) => {
-          console.log(err)
-        })
-      window.ethereum.on('accountsChanged', (accounts) => {
-        selectedAccount = accounts[0]
-        this.setState({ selectedAccount: accounts[0] })
-        console.log(`selected account changed to ${selectedAccount}`)
-      })
+    if (window.ethereum) {
+      window.web3 = new Web3(window.ethereum)
+      await window.ethereum.enable()
+    }
+    else if (window.web3) {
+      window.web3 = new Web3(window.web3.currentProvider)
+    }
+    else {
+      window.alert('Non-Ethereum browser detected. You should consider trying MetaMask!')
     }
   }
 
@@ -39,7 +31,7 @@ class App extends Component{
     const web3 = window.web3
 
     const accounts = await web3.eth.getAccounts()
-    this.setState({selectedAccount: accounts[0]})
+    this.setState({ selectedAccount: accounts[0] })
 
     const networkId = await web3.eth.net.getId()
 
@@ -55,8 +47,8 @@ class App extends Component{
       this.setState({ tokenPrice: tokenPrice.toString() })
       let tokensSold = await briandTokenSale.methods.tokensSold().call()
       this.setState({ tokensSold: tokensSold.toString() })
-      this.setState({ tokensAvailable: tokensAvailable.toString() })
-      tokensAvailable
+      // this.setState({ tokensAvailable: tokensAvailable.toString() })
+      // tokensAvailable
     } else {
       window.alert('BriandTokenSale contract not deployed to detected network.')
     }
@@ -77,22 +69,21 @@ class App extends Component{
     
     this.setState({ loading: false })
 
-    await listenForEvents();
-    return render();
+    this.state.listenForEvents();
   }
 
-  listenForEvents = async () => {
+  listenForEvents(){
     //listenForEvents    
-    briandTokenSale.methods.Sell({}, {
+    this.state.briandTokenSale.methods.Sell({}, {
       fromBlock: 0,
       toBlock: 'latest',
     }).watch((error, event) => {
       console.log("event triggered", event)
-      render();
+      this.state.render();
     })
   }
 
-  render = async () => {
+  render() {
     //render
     let content
     if(this.state.loading) {
@@ -108,8 +99,25 @@ class App extends Component{
     }
 
     return (
-      <div className="content mr-auto ml-auto">
-        {content}
+      <div>
+        <Navbar account={this.state.selectedAccount} />
+        <div className="container-fluid mt-5">
+          <div className="row">
+            <main role="main" className="col-lg-12 ml-auto mr-auto" style={{ maxWidth: '600px' }}>
+              <div className="content mr-auto ml-auto">
+                <a
+                  href="https://github.com/briandsmth/Smart-Contract_BriandToken"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                </a>
+
+                {content}
+
+              </div>
+            </main>
+          </div>
+        </div>
       </div>
     );
     
@@ -139,8 +147,8 @@ class App extends Component{
     this.setState({ loading: true })
 
     this.state.briandTokenSale.methods.buyTokens(numberOfTokens, {
-        from: selectedAccount,
-        value: numberOfTokens * tokenPrice,
+        from: this.state.selectedAccount,
+        value: numberOfTokens * this.state.tokenPrice,
         gas: 500000 // gas limit
     })
 
@@ -152,7 +160,8 @@ constructor(props) {
   super(props)
   this.state = {
     selectedAccount : '0x0',
-    briandTokenSale : '0',
+    briandTokenSale : {},
+    briandToken : {},
     briandTokenBalance     : '0',
     tokenPrice : '1000000000000000',
     tokensSold : '0',

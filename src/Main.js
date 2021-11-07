@@ -36,7 +36,7 @@ class Main extends Component {
                                         <span class="input-group-btn">
                                             <button type="submit" class="btn btn-primary btn-lg" onClick={(event) => {
                                                 event.preventDefault()
-                                                this.props.buyTokens(numberOfTokens)
+                                                this.props.buyTokens()
                                             }}>Buy Tokens</button>
                                         </span>
                                     </div>
