@@ -31,7 +31,7 @@ class App extends Component{
     const web3 = window.web3
 
     const accounts = await web3.eth.getAccounts()
-    this.setState({ selectedAccount: accounts[0] })
+    this.setState({ account: accounts[0] })
 
     const networkId = await web3.eth.net.getId()
 
@@ -69,7 +69,7 @@ class App extends Component{
     
     this.setState({ loading: false })
 
-    this.state.listenForEvents();
+    // this.state.listenForEvents();
   }
 
   listenForEvents(){
@@ -100,7 +100,7 @@ class App extends Component{
 
     return (
       <div>
-        <Navbar account={this.state.selectedAccount} />
+        <Navbar account={this.state.account} />
         <div className="container-fluid mt-5">
           <div className="row">
             <main role="main" className="col-lg-12 ml-auto mr-auto" style={{ maxWidth: '600px' }}>
@@ -147,7 +147,7 @@ class App extends Component{
     this.setState({ loading: true })
 
     this.state.briandTokenSale.methods.buyTokens(numberOfTokens, {
-        from: this.state.selectedAccount,
+        from: this.state.account,
         value: numberOfTokens * this.state.tokenPrice,
         gas: 500000 // gas limit
     })
@@ -159,7 +159,7 @@ class App extends Component{
 constructor(props) {
   super(props)
   this.state = {
-    selectedAccount : '0x0',
+    account : '0x0',
     briandTokenSale : {},
     briandToken : {},
     briandTokenBalance     : '0',

@@ -19,7 +19,7 @@ class Main extends Component {
                         <div id="content" class="text-center" style="display: none;">
                             <p>
                                 Introducing "BND Token" (BRIAND)!
-                                Token price is <span class="token-price">Balance : {window.web3.utils.fromwei(this.props.tokenPrice, 'Ether')}</span> Ether. You currently have <span class="briand-balance">{window.web3.utils.fromwei(this.props.briandTokenBalance, 'Ether')}</span>&nbsp;BND.
+                                Token price is <span class="token-price">Balance : {window.web3.utils.fromWei(this.props.tokenPrice, 'Ether')}</span> Ether. You currently have <span class="briand-balance">{window.web3.utils.fromWei(this.props.briandTokenBalance, 'Ether')}</span>&nbsp;BND.
                             </p>
                             <br />
                             <form onSubmit={(event) => {
@@ -47,7 +47,7 @@ class Main extends Component {
                                 <div id="progress" class="progress-bar progress-bar-striped active" aria-valuemin="0" aria-valuemax="100">
                                 </div>
                             </div>
-                            <p><span className="float-left">Balance : {window.web3.utils.fromwei(this.props.tokensSold)}</span> / <span class="float-right">Balance : {window.web3.utils.fromwei(this.props.tokensAvailable)}</span> tokens sold</p>
+                            <p><span className="float-left">Balance : {window.web3.utils.fromWei(this.props.tokensSold)}</span> / <span class="float-right">Balance : {window.web3.utils.fromWei(this.props.tokensAvailable)}</span> tokens sold</p>
 
                             <p id="accountAddress">{this.props.selectedAccount}</p>
                         </div>

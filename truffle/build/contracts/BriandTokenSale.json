@@ -8122,12 +8122,12 @@
     "5777": {
       "events": {},
       "links": {},
-      "address": "0xBB7EC8541e1fFFdBeDEd1A743ddE1d42b417F280",
-      "transactionHash": "0x06bddafbb391077ae01e3e4603c8205b88af53b0869e033dbc4e2682eb45bd63"
+      "address": "0x740170f44d6423aE7C7EFB7039806DeBeC5263AD",
+      "transactionHash": "0x7a91364b4a24f93715e4f52e94721b08b4fa3f545b130bb857a13a706a90a35c"
     }
   },
   "schemaVersion": "3.4.3",
-  "updatedAt": "2021-10-26T03:37:08.724Z",
+  "updatedAt": "2021-11-07T13:21:17.834Z",
   "networkType": "ethereum",
   "devdoc": {
     "kind": "dev",
